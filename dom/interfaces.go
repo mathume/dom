@@ -7,6 +7,7 @@ type Node interface{
 	Parent() Node
 	SetParent(n Node)
 	ChildNodes() []Node
+	ChildAt(index int) (Node, error)
 	AppendChildNode(n Node)
 	String() string
 }
@@ -92,6 +93,7 @@ type DOMBuilder interface{
 }
 
 type Iterator interface{
-	Next() (Node, error)
+	Next() error
 	Reset()
+	Current() Node
 }

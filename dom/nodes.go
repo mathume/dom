@@ -1,4 +1,8 @@
 package dom
+import (
+	"strconv"
+	"errors"
+)
 
 type node struct{
 	parent Node
@@ -7,6 +11,17 @@ type node struct{
 
 func (n *node)ChildNodes() []Node{
 	return n.child
+}
+
+func (n *node)ChildAt(index int) (child Node, err error){
+	if len(n.ChildNodes())<index + 1 {
+		child = nil
+		err = errors.New("No child node at index " + strconv.Itoa(index) + ".")
+	}else{
+		child = n.ChildNodes()[index]
+		err = nil
+	}
+	return
 }
 
 func (n *node)AppendChildNode(m Node){
