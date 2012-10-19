@@ -4,17 +4,22 @@ import (
 	"encoding/xml"
 	"io"
 	"os"
+	"strings"
 )
 
 type dombuilder struct{
 	d DOM
 	filename string
+	text string
 }
 
 // creates and initializes IDOMBuilder structure
 // only implements building dom from xml file
 func NewDOMBuilder() DOMBuilder{
-	return new(dombuilder)
+	db := new(dombuilder)
+	db.filename = ""
+	db.text = ""
+	return db
 }
 
 func (db *dombuilder)SetFile(filename string){
@@ -26,15 +31,26 @@ func (db *dombuilder)File() string{
 	return db.filename
 }
 
+func (db *dombuilder)SetXml(text string) {
+	db.text = text
+	return
+}
+
+func (db *dombuilder)Xml() string{
+	return db.text
+}
+
 func (db *dombuilder)DOM() DOM{
 	return db.d
 }
 
-func (db *dombuilder)Build(){
+func (db *dombuilder)Build() (err error){
 	if db.filename=="" {
+		db.build_from_string()
 	}else{
 		db.build_from_file()
 	}
+	return
 }
 
 func (db *dombuilder)build_from_file(){
@@ -47,9 +63,14 @@ func (db *dombuilder)build_from_file(){
 	db.convertDecoderToDOM(file)
 }
 
-func (db *dombuilder)convertDecoderToDOM(file io.Reader){
+func (db *dombuilder)build_from_string(){
+	reader := strings.NewReader(db.text)
+	db.convertDecoderToDOM(reader)
+}
 
-	dc := xml.NewDecoder(file)
+func (db *dombuilder)convertDecoderToDOM(reader io.Reader){
+
+	dc := xml.NewDecoder(reader)
 	decl := NewDeclaration()
 	root := NewElement()
 

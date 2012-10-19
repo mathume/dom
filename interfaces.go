@@ -81,7 +81,6 @@ type DOM interface{
 	Root() Element
 	FileName() string
 	SaveAs(filename string) error
-	Iterator() Iterator
 }
 
 // builds an DOM
@@ -90,11 +89,7 @@ type DOMBuilder interface{
 	File() string
 	SetFile(filename string)
 	DOM() DOM
-	Build()
-}
-
-type Iterator interface{
-	Next() error
-	Reset()
-	Current() Node
+	Build() error
+	Xml() string
+	SetXml(xml string)
 }
