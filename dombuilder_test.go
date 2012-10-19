@@ -7,9 +7,8 @@ import (
 )
 
 func TestConvertDecoderToDOM_ReadsDeclaration(t *testing.T){
-	db := NewDOMBuilder()
 	text,expected_declaration := declaration_and_empty_root()
-	db.SetXml(text)
+	db := NewDOMBuilder(strings.NewReader(text))
 	db.Build()
 	d := db.DOM().Declaration()
 
@@ -19,8 +18,7 @@ func TestConvertDecoderToDOM_ReadsDeclaration(t *testing.T){
 }
 
 func TestConvertDecoderToDOM_ReadsEmptyRoot(t *testing.T){
-	db := NewDOMBuilder()
-	db.SetXml(empty_root())
+	db := NewDOMBuilder(strings.NewReader(empty_root()))
 	expected := split_empty_root()
 	db.Build()
 	r := db.DOM().Root()
@@ -31,13 +29,7 @@ func TestConvertDecoderToDOM_ReadsEmptyRoot(t *testing.T){
 }
 
 func TestConvertDecoderToDOM_Build_RaisesError_WithNonXml(t *testing.T){
-	db := NewDOMBuilder()
-	text := "abc"
-	db.SetXml(text)
-	err := db.Build()
-	if(err == nil){
-		t.Fail()
-	}
+	t.Fatal("Test not implemented yet.")
 }
 
 func split_empty_root()(root string){

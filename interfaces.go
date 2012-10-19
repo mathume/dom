@@ -1,5 +1,9 @@
 package dom
 
+import(
+	"io"
+)
+
 // represents an arbitrary xml node
 // xml declaration and root element
 // have Parent() == null
@@ -79,17 +83,13 @@ type Data interface{
 type DOM interface{
 	Declaration() Declaration
 	Root() Element
-	FileName() string
-	SaveAs(filename string) error
 }
 
 // builds an DOM
 // by default the DOM is read from a file
 type DOMBuilder interface{
-	File() string
-	SetFile(filename string)
 	DOM() DOM
 	Build() error
-	Xml() string
-	SetXml(xml string)
+	Reader()(reader io.Reader)
+	SetReader(reader io.Reader)
 }

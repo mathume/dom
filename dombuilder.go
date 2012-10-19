@@ -3,41 +3,30 @@ package dom
 import (
 	"encoding/xml"
 	"io"
-	"os"
-	"strings"
+	"errors"
+	"fmt"
 )
 
 type dombuilder struct{
 	d DOM
-	filename string
-	text string
+	reader io.Reader
 }
 
 // creates and initializes IDOMBuilder structure
 // only implements building dom from xml file
-func NewDOMBuilder() DOMBuilder{
+func NewDOMBuilder(reader io.Reader) DOMBuilder{
 	db := new(dombuilder)
-	db.filename = ""
-	db.text = ""
+	db.reader = reader
 	return db
 }
 
-func (db *dombuilder)SetFile(filename string){
-	db.filename = filename
+func (db *dombuilder)SetReader(reader io.Reader){
+	db.reader = reader
 	return
 }
 
-func (db *dombuilder)File() string{
-	return db.filename
-}
-
-func (db *dombuilder)SetXml(text string) {
-	db.text = text
-	return
-}
-
-func (db *dombuilder)Xml() string{
-	return db.text
+func (db *dombuilder)Reader()(reader io.Reader){
+	return db.reader
 }
 
 func (db *dombuilder)DOM() DOM{
@@ -45,27 +34,13 @@ func (db *dombuilder)DOM() DOM{
 }
 
 func (db *dombuilder)Build() (err error){
-	if db.filename=="" {
-		db.build_from_string()
-	}else{
-		db.build_from_file()
-	}
+	defer func() {
+		if r:=recover(); r!=nil {
+			err = errors.New(fmt.Sprint(r))
+		}
+	}()
+	db.convertDecoderToDOM(db.reader)
 	return
-}
-
-func (db *dombuilder)build_from_file(){
-	file, err := os.Open(db.filename)
-	if err != nil {
-		panic("Cannot open file at " + db.filename)
-	}
-	defer file.Close()
-
-	db.convertDecoderToDOM(file)
-}
-
-func (db *dombuilder)build_from_string(){
-	reader := strings.NewReader(db.text)
-	db.convertDecoderToDOM(reader)
 }
 
 func (db *dombuilder)convertDecoderToDOM(reader io.Reader){
@@ -97,7 +72,7 @@ outer:
 	}
 	build_subtree(dc, root)
 
-	db.d = CreateDOM(decl, root, db.filename)
+	db.d = CreateDOM(decl, root)
 }
 
 func build_subtree(dc *xml.Decoder, n Node){

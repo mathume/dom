@@ -1,16 +1,10 @@
 /* needs documentation
 */
 package dom
-import "io/ioutil"
 
 type dom struct{
 	decl Declaration
 	root Element
-	filename string
-}
-
-func (d *dom)FileName() string{
-	return d.filename
 }
 
 func (d *dom)Declaration() Declaration{
@@ -32,14 +26,9 @@ func NewDom() DOM{
 	return new(dom)
 }
 
-func CreateDOM(decl Declaration, root Element, filename string) DOM{
+func CreateDOM(decl Declaration, root Element) DOM{
 	d := new(dom)
 	d.decl = decl
 	d.root = root
-	d.filename = filename
 	return d
-}
-
-func (d *dom)SaveAs(filename string) error{
-	return ioutil.WriteFile(filename, []byte(d.String() + "\n"), 0666)
 }
