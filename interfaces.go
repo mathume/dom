@@ -13,6 +13,7 @@ type Node interface{
 	ChildNodes() []Node
 	ChildAt(index int) (Node, error)
 	AppendChildNode(n Node)
+	Store() DOMStore
 	String() string
 }
 
@@ -81,6 +82,7 @@ type Data interface{
 // other dom functions like GetElementsById etc
 // might be added later
 type DOM interface{
+	Node
 	Declaration() Declaration
 	Root() Element
 }
@@ -88,8 +90,17 @@ type DOM interface{
 // builds an DOM
 // by default the DOM is read from a file
 type DOMBuilder interface{
-	DOM() DOM
-	Build() error
+	Build() (DOM, error)
 	Reader()(reader io.Reader)
-	SetReader(reader io.Reader)
+}
+
+type DOMStore interface{
+	NewDOM() DOM
+	CreateElement(prefix string, name string, attr []Attribute) Element
+	CreateAttribute(prefix string, name string, value string) Attribute
+	CreateProcInst(target string, data string) ProcInst
+	CreateComment(data string) Comment
+	CreateText(data string) Text
+	CreateDeclaration(data string) Declaration
+	CreateDirective(data string) Directive
 }

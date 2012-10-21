@@ -10,96 +10,67 @@ import (
 type dombuilder struct{
 	d DOM
 	reader io.Reader
+	store DOMStore
 }
 
 // creates and initializes IDOMBuilder structure
 // only implements building dom from xml file
-func NewDOMBuilder(reader io.Reader) DOMBuilder{
+func NewDOMBuilder(reader io.Reader, store DOMStore) DOMBuilder{
 	db := new(dombuilder)
 	db.reader = reader
+	db.store = store
 	return db
-}
-
-func (db *dombuilder)SetReader(reader io.Reader){
-	db.reader = reader
-	return
 }
 
 func (db *dombuilder)Reader()(reader io.Reader){
 	return db.reader
 }
 
-func (db *dombuilder)DOM() DOM{
-	return db.d
-}
-
-func (db *dombuilder)Build() (err error){
+func (db *dombuilder)Build() (dom DOM, err error){
 	defer func() {
 		if r:=recover(); r!=nil {
 			err = errors.New(fmt.Sprint(r))
+			return
 		}
 	}()
-	db.convertDecoderToDOM(db.reader)
+	
+	dom = db.convertDecoderToDOM()
 	return
 }
 
-func (db *dombuilder)convertDecoderToDOM(reader io.Reader){
+func (db *dombuilder)convertDecoderToDOM() DOM{
 
-	dc := xml.NewDecoder(reader)
-	decl := NewDeclaration()
-	root := NewElement()
-
-	tok,_ := dc.Token()
-	switch typ := tok.(type){
-	case xml.ProcInst:
-		decl = CreateDeclaration(string(typ.Inst))
-		tok, _ = dc.Token()
-	}
-
-	for {
-		switch typ := tok.(type){
-		case xml.StartElement:
-			root = CreateElement(typ.Name.Space, typ.Name.Local, convert_Attr(typ.Attr))
-			goto outer
-		case nil:
-			return
-		}
-		tok,_ = dc.Token()
-	}
-outer:
-	if root.Name() == "" {
-		panic("root element not found")
-	}
-	build_subtree(dc, root)
-
-	db.d = CreateDOM(decl, root)
+	dc := xml.NewDecoder(db.reader)
+	dom := db.store.NewDOM()
+	build_subtree(dc, dom)
+	return dom
 }
 
 func build_subtree(dc *xml.Decoder, n Node){
 	tok,_ := dc.Token()
 	switch typ:=tok.(type){
 	case xml.StartElement:
-		el := CreateElement(typ.Name.Space, typ.Name.Local, convert_Attr(typ.Attr))
+		el := n.Store().CreateElement(typ.Name.Space, typ.Name.Local, convert_Attr(typ.Attr,n.Store()))
 		el.SetParent(n)
 		n.AppendChildNode(el)
 		build_subtree(dc, el)
 	case xml.CharData:
-		txt := CreateText(string(typ))
+		txt := n.Store().CreateText(string(typ))
 		txt.SetParent(n)
 		n.AppendChildNode(txt)
 		build_subtree(dc, n)
 	case xml.Comment:
-		a := CreateComment(string(typ))
+		a := n.Store().CreateComment(string(typ))
 		a.SetParent(n)
 		n.AppendChildNode(a)
 		build_subtree(dc,n)
 	case xml.Directive:
-		d := CreateDirective(string(typ))
+		d := n.Store().CreateDirective(string(typ))
 		d.SetParent(n)
 		n.AppendChildNode(d)
 		build_subtree(dc,n)
 	case xml.ProcInst:
-		pi := CreateProcInst(typ.Target, string(typ.Inst))
+		pi := n.Store().CreateProcInst(typ.Target, string(typ.Inst))
 		pi.SetParent(n)
 		n.AppendChildNode(pi)
 		build_subtree(dc,n)
@@ -114,10 +85,10 @@ func build_subtree(dc *xml.Decoder, n Node){
 	return
 }
 
-func convert_Attr(a []xml.Attr) []Attribute{
+func convert_Attr(a []xml.Attr,store DOMStore) []Attribute{
 	as := make([]Attribute,len(a))
 	for i:= 0; i<len(a); i++ {
-		as[i] = CreateAttribute(a[i].Name.Space, a[i].Name.Local, a[i].Value)
+		as[i] = store.CreateAttribute(a[i].Name.Space, a[i].Name.Local, a[i].Value)
 	}
 	return as
 }

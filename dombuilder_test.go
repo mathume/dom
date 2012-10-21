@@ -8,21 +8,22 @@ import (
 
 func TestConvertDecoderToDOM_ReadsDeclaration(t *testing.T){
 	text,expected_declaration := declaration_and_empty_root()
-	db := NewDOMBuilder(strings.NewReader(text))
-	db.Build()
-	d := db.DOM().Declaration()
-
+	db := NewDOMBuilder(strings.NewReader(text),NewDOMStore())
+	dom,_ := db.Build()
+	d := dom.Declaration()
+	
 	if(d.String() != expected_declaration){
 		t.Fail()
 	}
 }
 
 func TestConvertDecoderToDOM_ReadsEmptyRoot(t *testing.T){
-	db := NewDOMBuilder(strings.NewReader(empty_root()))
+	db := NewDOMBuilder(strings.NewReader(empty_root()),NewDOMStore())
 	expected := split_empty_root()
-	db.Build()
-	r := db.DOM().Root()
-
+	dom,_ := db.Build()
+	r := dom.Root()
+	t.Log(r)
+	t.Log(expected)
 	if(r.String() != expected){
 		t.Fail()
 	}
