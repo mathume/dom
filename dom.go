@@ -29,7 +29,7 @@ func (d *dom) Store() DOMStore {
 }
 
 func (d *dom) String() string {
-	return d.decl.String() + "\n" + d.root.String()
+	return d.self.String()
 }
 
 func (d *dom) Declaration() Declaration {

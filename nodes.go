@@ -43,7 +43,11 @@ func (n *node) Store() DOMStore {
 }
 
 func (n *node) String() string {
-	return "node"
+	s := ""
+	for _, c := range n.ChildNodes() {
+		s += c.String()
+	}
+	return s
 }
 
 type element struct {
@@ -55,18 +59,24 @@ type element struct {
 
 func (e *element) String() string {
 	s := "<"
-	if e.prefix != "" {
-		s += e.prefix + ":"
+	if e.Prefix() != "" {
+		s += e.Prefix() + ":"
 	}
-	s += e.name
-	for _, a := range e.attr {
+	s += e.Name()
+	for _, a := range e.Attr() {
 		s += a.String()
 	}
+	
+	if len(e.ChildNodes())==0 {
+		s += "/>"
+		return s
+	}
+	
 	s += ">"
 	for _, e := range e.ChildNodes() {
 		s += e.String()
 	}
-	s += "</" + e.name + ">"
+	s += "</" + e.Name() + ">"
 	return s
 }
 
