@@ -4,6 +4,18 @@ import(
 	"io"
 )
 
+type Kind int
+
+const (
+	NodeKind = iota
+	ElementKind
+	CommentKind
+	DirectiveKind
+	ProcInstKind
+	DeclarationKind
+	TextKind
+)
+
 // represents an arbitrary xml node
 // xml declaration and root element
 // have Parent() == null
@@ -15,6 +27,7 @@ type Node interface{
 	AppendChildNode(n Node)
 	Store() DOMStore
 	String() string
+	Kind() Kind
 }
 
 // represents an xml element
@@ -25,6 +38,7 @@ type Element interface{
 	Prefix() string
 	Name() string
 	Attr() []Attribute
+	Text() string
 }
 
 // represents an xml attribute

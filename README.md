@@ -3,7 +3,9 @@ Lazy loading for the dom is targeted. Currently only in memory representation is
 
 TODO:
 -Implement xpath
+
 -Implement DBDOM
+
 -Implement TCPDOM
 
 -Extend tests

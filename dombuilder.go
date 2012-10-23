@@ -3,6 +3,7 @@ package dom
 import (
 	"encoding/xml"
 	"io"
+	"strings"
 )
 
 type dombuilder struct {
@@ -25,12 +26,12 @@ func (db *dombuilder) Reader() (reader io.Reader) {
 }
 
 func (db *dombuilder) Build() (dom DOM, err error) {
-	
-	dom,err = db.convertDecoderToDOM()
+
+	dom, err = db.convertDecoderToDOM()
 	return
 }
 
-func (db *dombuilder) convertDecoderToDOM()(dom DOM, err error) {
+func (db *dombuilder) convertDecoderToDOM() (dom DOM, err error) {
 
 	dc := xml.NewDecoder(db.reader)
 	dom = db.store.NewDOM()
@@ -39,45 +40,51 @@ func (db *dombuilder) convertDecoderToDOM()(dom DOM, err error) {
 }
 
 func build_subtree(dc *xml.Decoder, n Node) (err error) {
+
 	tok, err := dc.Token()
 	if err != nil {
+		if err == io.EOF {
+			err = nil
+		}
 		return
 	}
+
 	switch typ := tok.(type) {
 	case xml.StartElement:
 		el := n.Store().CreateElement(typ.Name.Space, typ.Name.Local, convert_Attr(typ.Attr, n.Store()))
-		el.SetParent(n)
-		n.AppendChildNode(el)
-		err = build_subtree(dc, el)
+		err = linkAndContinueDown(dc, n, el)
 	case xml.CharData:
 		txt := n.Store().CreateText(string(typ))
-		txt.SetParent(n)
-		n.AppendChildNode(txt)
-		err = build_subtree(dc, n)
+		err = linkAndContinueUp(dc, n, txt)
 	case xml.Comment:
 		a := n.Store().CreateComment(string(typ))
-		a.SetParent(n)
-		n.AppendChildNode(a)
-		err = build_subtree(dc, n)
+		err = linkAndContinueUp(dc, n, a)
 	case xml.Directive:
 		d := n.Store().CreateDirective(string(typ))
-		d.SetParent(n)
-		n.AppendChildNode(d)
-		err = build_subtree(dc, n)
+		err = linkAndContinueUp(dc, n, d)
 	case xml.ProcInst:
 		pi := n.Store().CreateProcInst(typ.Target, string(typ.Inst))
-		pi.SetParent(n)
-		n.AppendChildNode(pi)
-		err = build_subtree(dc, n)
+		err = linkAndContinueUp(dc, n, pi)
 	case xml.EndElement:
-		switch pTyp := n.Parent().(type) {
-		case Element:
-			err = build_subtree(dc, pTyp)
-		default:
-			return
-		}
+		err = build_subtree(dc, n.Parent())
 	}
 	return
+}
+
+func linkAndContinueUp(dc *xml.Decoder, parent Node, child Node)(err error){
+	err = linkAndContinueWith(parent, dc, parent, child)
+	return
+}
+
+func linkAndContinueDown(dc *xml.Decoder, parent Node, child Node)(err error){
+	err = linkAndContinueWith(child, dc, parent, child)
+	return
+}
+
+func linkAndContinueWith(with Node, dc *xml.Decoder, parent Node, child Node)(err error){
+	child.SetParent(parent)
+	parent.AppendChildNode(child)
+	return build_subtree(dc, with)
 }
 
 func convert_Attr(a []xml.Attr, store DOMStore) []Attribute {
@@ -86,4 +93,31 @@ func convert_Attr(a []xml.Attr, store DOMStore) []Attribute {
 		as[i] = store.CreateAttribute(a[i].Name.Space, a[i].Name.Local, a[i].Value)
 	}
 	return as
+}
+
+func isWellformed(d DOM) (b bool) {
+	noOfRoots := 0
+
+	for _, node := range d.ChildNodes() {
+		switch node.Kind() {
+		case ElementKind:
+			noOfRoots++
+		case TextKind:
+			if !containsOnlyWhiteSpace(
+				node.(Text).Data()) {
+				return
+			}
+		}
+	}
+
+	if noOfRoots == 1 {
+		b = true
+	}
+	return
+}
+
+func containsOnlyWhiteSpace(s string)(b bool){
+	ws := " \t\n\r"
+	if strings.Trim(s, ws) == "" { b = true }
+	return
 }

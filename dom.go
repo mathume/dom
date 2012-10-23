@@ -45,6 +45,10 @@ func (d *dom) Root() Element {
 	return d.root
 }
 
+func (d *dom) Kind() Kind{
+	return NodeKind
+}
+
 func (d *dom)declAndRootNotSet() bool{
 	return d.root == nil || d.decl == nil
 }
